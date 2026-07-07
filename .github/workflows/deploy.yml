@@ -1,0 +1,84 @@
+﻿name: 🚀 Build & Deploy
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      # ==================== Frontend ====================
+      - name: 🏗️ Build Frontend
+        run: |
+          cd hcp-ui
+          if [ -f package.json ]; then
+            npm install --registry=https://registry.npmmirror.com
+            npm run build:prod
+            echo "✅ Frontend built"
+          else
+            echo "ℹ️ No package.json, skipping frontend"
+          fi
+
+      # ==================== Backend ====================
+      - name: 🏗️ Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          java-version: '8'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: 📦 Build with Maven
+        run: mvn clean package -DskipTests -T 4
+
+      - name: 📋 Copy JARs to Docker context
+        run: |
+          chmod +x scripts/copy-jars.sh
+          bash scripts/copy-jars.sh
+
+      # ==================== Package ====================
+      - name: 📦 Package deployment archive
+        run: |
+          tar -czf deploy.tar.gz docker/
+          echo "📦 Package size: $(du -h deploy.tar.gz | cut -f1)"
+
+      # ==================== Deploy ====================
+      - name: ☁️ Upload to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: root
+          password: ${{ secrets.SERVER_PASSWORD }}
+          source: "deploy.tar.gz"
+          target: "/home/hcp/"
+          overwrite: true
+
+      - name: 🔄 Deploy on server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: root
+          password: ${{ secrets.SERVER_PASSWORD }}
+          script: |
+            set -e
+            echo "📂 Extracting..."
+            mkdir -p /home/hcp/docker
+            cd /home/hcp/docker
+            tar -xzf /home/hcp/deploy.tar.gz --strip-components=1
+            rm -f /home/hcp/deploy.tar.gz
+
+            echo "🏗️ Building Docker images..."
+            docker compose build --parallel
+
+            echo "🚀 Restarting services..."
+            docker compose up -d --remove-orphans
+
+            echo ""
+            echo "✅ Deploy complete!"
+            echo ""
+            docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"

@@ -1,0 +1,36 @@
+﻿# ====================
+# 构建输出
+# ====================
+HELP.md
+target/
+logs/
+*.log
+derby.log
+node_modules/
+
+# ====================
+# IDE
+# ====================
+.idea/
+*.iml
+*.iws
+*.ipr
+.classpath
+.project
+.settings
+.vscode/
+.DS_Store
+Thumbs.db
+
+# ====================
+# 不提交 JAR 文件（CI/CD 自动构建）
+# ====================
+**/*.jar
+
+# ====================
+# 部署临时文件
+# ====================
+*.tar.gz
+chunks/
+.ssh_key
+.ssh_key.pub
