@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+﻿<?xml version="1.0" encoding="UTF-8"?>
 <!--
   Copyright 1999-2018 Alibaba Group Holding Ltd.
   Licensed under the Apache License, Version 2.0 (the "License");
@@ -96,22 +96,10 @@
 		<resources>
 			<resource>
 				<directory>src/main/resources</directory>
-				<filtering>true</filtering>
-				<excludes>
-					<exclude>**/*.woff</exclude>
-					<exclude>**/*.woff2</exclude>
-					<exclude>**/*.ttf</exclude>
-				</excludes>
-			</resource>
-			<resource>
-				<directory>src/main/resources</directory>
 				<filtering>false</filtering>
-				<includes>
-					<include>**/*.woff</include>
-					<include>**/*.woff2</include>
-					<include>**/*.ttf</include>
-				</includes>
 			</resource>
 		</resources>
 	</build>
 </project>
+
+
