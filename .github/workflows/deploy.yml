@@ -68,15 +68,30 @@ jobs:
           password: ${{ secrets.SERVER_PASSWORD }}
           script: |
             set -e
+
+            # 1. 如果 Docker 没装，先安装
+            if ! command -v docker &> /dev/null; then
+              echo "📦 Installing Docker..."
+              curl -fsSL https://get.docker.com | bash
+              systemctl start docker
+              systemctl enable docker
+              echo "✅ Docker installed: $(docker --version)"
+            else
+              echo "✅ Docker already installed: $(docker --version)"
+            fi
+
+            # 2. 解压
             echo "📂 Extracting..."
             mkdir -p /home/hcp/docker
             cd /home/hcp/docker
             tar -xzf /home/hcp/deploy.tar.gz --strip-components=1
             rm -f /home/hcp/deploy.tar.gz
 
+            # 3. 构建镜像
             echo "🏗️ Building Docker images..."
             docker compose build --parallel
 
+            # 4. 启动服务
             echo "🚀 Restarting services..."
             docker compose up -d --remove-orphans
 
